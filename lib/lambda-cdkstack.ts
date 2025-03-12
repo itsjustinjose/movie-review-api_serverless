@@ -11,14 +11,12 @@ export class LambdaCDKStack extends cdk.Stack{
     constructor(scope: Construct, id: string, props?: cdk.StackProps){
         super(scope, id)
 
-          this.helloFn = new NodejsFunction(this, "hello",{
+          const helloFn = new NodejsFunction(this, "hello",{
             architecture : Architecture.ARM_64,
             runtime : Runtime.NODEJS_LATEST,
             entry: `${__dirname}/../lambdas/hellolambda.ts`,
             memorySize: 128,
             timeout: cdk.Duration.seconds(10),
-            
-
          })
     }
 

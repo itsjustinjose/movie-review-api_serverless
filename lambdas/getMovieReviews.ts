@@ -19,7 +19,7 @@ export const handler  = async (event : APIGatewayEvent, context : APIGatewayEven
     const movieId = await event.pathParameters["movieId"]
 
     const queryCommandInput : QueryCommandInput ={
-        TableName : "reviewTable",
+        TableName : "ReviewTable",
         KeyConditionExpression : "movieId = :mid",
         ExpressionAttributeValues: {
             ":mid" : {N : movieId}

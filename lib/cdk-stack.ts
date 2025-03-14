@@ -17,6 +17,33 @@ export class LambdaCDKStack extends cdk.Stack{
     constructor(scope: Construct, id: string, props?: cdk.StackProps){
         super(scope, id)
 
+        
+        const getReviews = new NodejsFunction(this,"getReviews",{
+          architecture : lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_22_X,
+          timeout : cdk.Duration.seconds(10),
+          memorySize: 128,
+          entry : `${__dirname}/../lambdas/getMovieReviews.ts`
+         })
+
+         const addReviews = new NodejsFunction(this,"addReviews",{
+          architecture : lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_22_X,
+          timeout : cdk.Duration.seconds(10),
+          memorySize: 128,
+          entry : `${__dirname}/../lambdas/addMovieReviews.ts`
+         })
+
+         const getTranslation = new NodejsFunction(this,"getTranslation",{
+          architecture : lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_22_X,
+          timeout : cdk.Duration.seconds(10),
+          memorySize: 128,
+          entry : `${__dirname}/../lambdas/translationReviews.ts`
+         })
+
+
+      
 
     const movieReviewTable = new Table(this,"reviewTable",{
             billingMode: BillingMode.PAY_PER_REQUEST,
@@ -59,17 +86,6 @@ export class LambdaCDKStack extends cdk.Stack{
             allowOrigins: ["*"],
           },
         })
-
-
-        // Lambda Function
-
-        const getReviews = new NodejsFunction(this,"getReviews",{
-         architecture : lambda.Architecture.ARM_64,
-         runtime: lambda.Runtime.NODEJS_22_X,
-         timeout : cdk.Duration.seconds(10),
-         memorySize: 128,
-         entry : `${__dirname}/../lambdas/getMovieReviews.ts`
-        })
         
 //API 
       const movieResource = restAPI.root.addResource("movies")
@@ -77,18 +93,20 @@ export class LambdaCDKStack extends cdk.Stack{
       const reviewidmoviereviewResource = moviereviewResource.addResource("{movieId}")
 
       reviewidmoviereviewResource.addMethod("GET", new LambdaIntegration(getReviews))
+      moviereviewResource.addMethod("POST" , new LambdaIntegration(addReviews))
 
+      movieReviewTable.grantReadData(getReviews)
+      movieReviewTable.grantReadWriteData(addReviews)
 
-
-
-  
-      //Permissions
-      getReviews.addToRolePolicy(new PolicyStatement({
-        effect: Effect.ALLOW,
-        resources: [movieReviewTable.tableArn],
-        actions: ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
-    }));
+      getTranslation.addToRolePolicy(new PolicyStatement({
+        effect : Effect.ALLOW,
+        resources: ["*"],
+        actions:["translate:TranslateText"]
+      }))
     
+      
+
+
     }
 }
 

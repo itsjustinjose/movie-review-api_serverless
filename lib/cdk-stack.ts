@@ -88,6 +88,7 @@ export class LambdaCDKStack extends cdk.Stack{
         })
         
 //API 
+
       const movieResource = restAPI.root.addResource("movies")
       const moviereviewResource = movieResource.addResource("reviews")
       const reviewidmoviereviewResource = moviereviewResource.addResource("{movieId}")
@@ -98,10 +99,20 @@ export class LambdaCDKStack extends cdk.Stack{
       movieReviewTable.grantReadData(getReviews)
       movieReviewTable.grantReadWriteData(addReviews)
 
+
+
+      //Translation
+      const reviewResource =  restAPI.root.addResource("reviews")
+      const reviewIdreviewsResource = reviewResource.addResource("{reviewId}")
+      const movieIdreviewIdreviewsResource = reviewIdreviewsResource.addResource("{movieId}")
+      const translationEndpoint = movieIdreviewIdreviewsResource.addResource("translation")
+
+    translationEndpoint.addMethod("GET", new LambdaIntegration(getTranslation))
+
       getTranslation.addToRolePolicy(new PolicyStatement({
         effect : Effect.ALLOW,
         resources: ["*"],
-        actions:["translate:TranslateText"]
+        actions:["translate:TranslateText", "dynamodb:GetItem"]
       }))
     
       

@@ -6,8 +6,8 @@ export const handler = async (event: APIGatewayEvent , context :APIGatewayEventR
 
     return {
         statusCode: 200,
-        headers: { "Content-Type": "application/json" },  // ✅ Ensure Content-Type is set
-        body: JSON.stringify({ message: "Hello, world" }) // ✅ body must be a stringified JSON object
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ message: "Hello, world" })
     };
 
 }

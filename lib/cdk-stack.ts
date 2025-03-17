@@ -47,6 +47,14 @@ export class LambdaCDKStack extends cdk.Stack {
       entry: `${__dirname}/../lambdas/addMovieReviews.ts`,
     });
 
+    const updateRevies = new NodejsFunction(this, "updateReviews", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      entry: `${__dirname}/../lambdas/updateReviews.ts`,
+    });
+
     const getTranslation = new NodejsFunction(this, "getTranslation", {
       architecture: lambda.Architecture.ARM_64,
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -136,6 +144,12 @@ export class LambdaCDKStack extends cdk.Stack {
     //API
 
     const movieResource = restAPI.root.addResource("movies");
+
+    const movieIdmovieResource = movieResource.addResource("{movieId}");
+    const reviewsmovieIdmovieResource =
+      movieIdmovieResource.addResource("reviews");
+    const reviewIdreviewsmovieIdmovieResource =
+      reviewsmovieIdmovieResource.addResource("{reviewId}");
     const moviereviewResource = movieResource.addResource("reviews");
     const reviewidmoviereviewResource =
       moviereviewResource.addResource("{movieId}");
@@ -151,8 +165,15 @@ export class LambdaCDKStack extends cdk.Stack {
       },
     });
 
+    reviewIdreviewsmovieIdmovieResource.addMethod(
+      "PUT",
+      new LambdaIntegration(updateRevies)
+    );
+
+  
     movieReviewTable.grantReadData(getReviews);
     movieReviewTable.grantReadWriteData(addReviews);
+    movieReviewTable.grantReadWriteData(updateRevies)
 
     //Translation
     const reviewResource = restAPI.root.addResource("reviews");

@@ -7,9 +7,10 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as node from "aws-cdk-lib/aws-lambda-nodejs";
 export class AuthAppStack extends cdk.Stack {
+  public readonly userpool: UserPool;
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
-    const userPool = new UserPool(this, "mypool", {
+    this.userpool = new UserPool(this, "mypool", {
       signInAliases: {
         username: true,
       },
@@ -25,7 +26,7 @@ export class AuthAppStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
-    const appClient = userPool.addClient("myClient", {
+    const appClient = this.userpool.addClient("myClient", {
       authFlows: {
         userPassword: true,
       },

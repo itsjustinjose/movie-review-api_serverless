@@ -25,6 +25,10 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
     };
 
   const token = event.headers.Authorization;
+  const path = event.pathParameters!!;
+  const movieId = path["movieId"];
+  const reviewId = path["reviewId"];
+
   try {
     const isValidToken = await JWTVerifier.verify(token);
     if (!isValidToken.sub)
@@ -41,27 +45,12 @@ export const handler: APIGatewayProxyHandlerV2 = async (event) => {
 
   const tokenPayload = await JWTVerifier.verify(token);
   const reviewerId = tokenPayload["cognito:username"];
+  
 
-  if (!event.body)
-    return { statusCode: 404, body: JSON.stringify("Invalid body") };
 
-  const requestBody: AddReviewType = JSON.parse(event.body) as AddReviewType;
-  const bodyToAdd: MovieReview = {
-    movieId: requestBody.movieId,
-    reviewId: reviewId,
-    reviewerId: reviewerId,
-    reviewDate: getFormattedDate(),
-    content: requestBody.content,
+
+  return {
+    statusCode: 401,
+    body: JSON.stringify({ message: "Invalid Token" }),
   };
-
-  const response = await dynamoClient.send(
-    new PutItemCommand({
-      TableName: "ReviewTable",
-      Item: marshall(bodyToAdd),
-    })
-  );
-
-  reviewId++;
-
-  return { statusCode: 201, body: JSON.stringify({ message: "Review Added" }) };
 };

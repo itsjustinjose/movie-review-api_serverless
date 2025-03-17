@@ -3,7 +3,12 @@ import * as cdk from "aws-cdk-lib";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
-import { LambdaIntegration, RestApi } from "aws-cdk-lib/aws-apigateway";
+import {
+  AuthorizationType,
+  CognitoUserPoolsAuthorizer,
+  LambdaIntegration,
+  RestApi,
+} from "aws-cdk-lib/aws-apigateway";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
 import {
   AwsCustomResource,
@@ -14,11 +19,16 @@ import { generateBatch } from "../shared/utils";
 import { movieReviews } from "../seed/movieReviews";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
 import { sign } from "crypto";
+import { AuthAppStack } from "./auth-app-stack";
 
+interface Props {
+  authStack: AuthAppStack;
+}
 export class LambdaCDKStack extends cdk.Stack {
   public helloFn: NodejsFunction;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: Props) {
+    const userpool = props.authStack.userpool;
     super(scope, id);
 
     const getReviews = new NodejsFunction(this, "getReviews", {
@@ -102,6 +112,13 @@ export class LambdaCDKStack extends cdk.Stack {
 
     // API
 
+    //Authorizer
+    const cognito_auth = new CognitoUserPoolsAuthorizer(this, "authorizer", {
+      authorizerName: "cognito_auth",
+      cognitoUserPools: [userpool],
+      identitySource: "method.request.header.Authorization",
+    });
+
     const restAPI = new RestApi(this, "myrest", {
       deployOptions: {
         stageName: "dev",
@@ -115,6 +132,7 @@ export class LambdaCDKStack extends cdk.Stack {
       },
     });
 
+    cognito_auth._attachToApi(restAPI);
     //API
 
     const movieResource = restAPI.root.addResource("movies");
@@ -126,7 +144,12 @@ export class LambdaCDKStack extends cdk.Stack {
       "GET",
       new LambdaIntegration(getReviews)
     );
-    moviereviewResource.addMethod("POST", new LambdaIntegration(addReviews));
+    moviereviewResource.addMethod("POST", new LambdaIntegration(addReviews), {
+      authorizationType: AuthorizationType.COGNITO,
+      authorizer: {
+        authorizerId: cognito_auth.authorizerId,
+      },
+    });
 
     movieReviewTable.grantReadData(getReviews);
     movieReviewTable.grantReadWriteData(addReviews);

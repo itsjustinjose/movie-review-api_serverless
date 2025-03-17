@@ -30,6 +30,7 @@
     "@types/aws-lambda": "^8.10.147",
     "ajv": "^8.17.1",
     "aws-cdk-lib": "2.180.0",
+    "aws-jwt-verify": "^5.0.0",
     "aws-lambda": "^1.0.7",
     "constructs": "^10.0.0",
     "esbuild": "^0.25.1",

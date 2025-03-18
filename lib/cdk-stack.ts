@@ -170,10 +170,9 @@ export class LambdaCDKStack extends cdk.Stack {
       new LambdaIntegration(updateRevies)
     );
 
-  
     movieReviewTable.grantReadData(getReviews);
     movieReviewTable.grantReadWriteData(addReviews);
-    movieReviewTable.grantReadWriteData(updateRevies)
+    movieReviewTable.grantReadWriteData(updateRevies);
 
     //Translation
     const reviewResource = restAPI.root.addResource("reviews");

@@ -1,40 +1,76 @@
+import { APIGatewayProxyHandlerV2 } from "aws-lambda"; // CHANGED
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 import { QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import { unmarshall } from "@aws-sdk/util-dynamodb";
-import { APIGatewayEvent, APIGatewayEventRequestContext } from "aws-lambda";
 
+const dynamoClient = new DynamoDBClient({ region: process.env.REGION }); 
 
+export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
+  
+  try {
+    console.log("[EVENT]", JSON.stringify(event));
 
-const dynamoClient = new DynamoDBClient()
+    // Extract movieId from path parameters
+    const pathParameters = event?.pathParameters;
+    const movieId = pathParameters?.movieId
+      ? parseInt(pathParameters.movieId)
+      : undefined;
 
-export const handler  = async (event : APIGatewayEvent, context : APIGatewayEventRequestContext) =>{
-
-
-    if(!event.pathParameters){
-        return {
-            statusCode: 400,
-            body : JSON.stringify({message : "Movie ID not present"})
-        }
+    // Validate movieId
+    if (!movieId) {
+      return {
+        statusCode: 400,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ message: "Movie ID not present in the table" }),
+      };
     }
-    const movieId = await event.pathParameters["movieId"]
 
-    const queryCommandInput : QueryCommandInput ={
-        TableName : "ReviewTable",
-        KeyConditionExpression : "movieId = :mid",
-        ExpressionAttributeValues: {
-            ":mid" : {N : movieId}
-        }
+    // Build the DynamoDB query
+    const queryCommandInput: QueryCommandInput = {
+      TableName: process.env.TABLE_NAME || "ReviewTable", // Use environment variable or fallback
+      KeyConditionExpression: "movieId = :mid",
+      ExpressionAttributeValues: {
+        ":mid": { N: movieId.toString() }, // Ensure movieId is a string for DynamoDB
+      },
+    };
+
+    // Query DynamoDB
+    const response = await dynamoClient.send(
+      new QueryCommand(queryCommandInput)
+    );
+
+    // Handle no results
+    if (!response.Items || response.Items.length === 0) {
+      return {
+        statusCode: 404,
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ message: "No reviews found for this movie ID" }),
+      };
     }
 
-    const response = await dynamoClient.send(new QueryCommand(queryCommandInput))
-    if(!response.Items) return {ststusCode: 404, body : JSON.stringify({message:"No movies with this id"})}
-    const movies  =  response.Items.map(item => {
-        return unmarshall(item)
-    })
+    // Unmarshall DynamoDB items
+    const reviews = response.Items.map((item) => unmarshall(item));
+
+    // Return the results
     return {
-        statusCode: 200,
-        body : JSON.stringify( {
-            movies : movies
-        })
-    }
-}
+      statusCode: 200,
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ reviews }),
+    };
+  } catch (error: any) {
+    console.error("[ERROR]", error);
+    return {
+      statusCode: 500,
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ error: error.message }),
+    };
+  }
+};

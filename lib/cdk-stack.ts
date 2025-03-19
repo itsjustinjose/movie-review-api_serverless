@@ -25,7 +25,7 @@ interface Props {
   authStack: AuthAppStack;
 }
 export class LambdaCDKStack extends cdk.Stack {
-  public helloFn: NodejsFunction;
+  // public helloFn: NodejsFunction;
 
   constructor(scope: Construct, id: string, props: Props) {
     const userpool = props.authStack.userpool;
@@ -94,6 +94,8 @@ export class LambdaCDKStack extends cdk.Stack {
       entry: `${__dirname}/../lambdas/auth/logout.ts`,
     });
 
+
+    //Dynamo DB Review Table
     const movieReviewTable = new Table(this, "reviewTable", {
       billingMode: BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "movieId", type: AttributeType.NUMBER },

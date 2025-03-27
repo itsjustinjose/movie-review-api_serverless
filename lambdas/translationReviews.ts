@@ -12,8 +12,18 @@ const translateClient =  new TranslateClient()
 
 export const handler  = async (event : APIGatewayEvent, context : APIGatewayEventRequestContext) =>{
  
-    if(!event.pathParameters) return { statusCode: 400, body : JSON.stringify({message : "Invalid request"})}
-    if(!event.queryStringParameters) return { statusCode: 400, body : JSON.stringify({message : "Invalid request, no language specified"})}
+    if(!event.pathParameters) 
+        return { 
+            statusCode: 400, 
+            body : JSON.stringify({message : "Invalid request"})}
+
+
+    if(!event.queryStringParameters) 
+        return { 
+            statusCode: 400, 
+            body : JSON.stringify({message : "Invalid request, no language specified"})}
+
+            
     const targetLanguage = event.queryStringParameters["language"]
 
     const {movieId , reviewId} = event.pathParameters 

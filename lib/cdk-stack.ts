@@ -143,6 +143,7 @@ export class LambdaCDKStack extends cdk.Stack {
     });
 
     cognito_auth._attachToApi(restAPI);
+
     //API
 
     const movieResource = restAPI.root.addResource("movies");
@@ -172,6 +173,7 @@ export class LambdaCDKStack extends cdk.Stack {
       new LambdaIntegration(updateRevies)
     );
 
+    
     movieReviewTable.grantReadData(getReviews);
     movieReviewTable.grantReadWriteData(addReviews);
     movieReviewTable.grantReadWriteData(updateRevies);
